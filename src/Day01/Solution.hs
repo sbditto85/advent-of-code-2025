@@ -94,7 +94,7 @@ phaseOne input =
     zeros
 
 -- phaseTwo :: Text -> Int
-phaseTwo :: Text -> [Int]
+phaseTwo :: Text -> (Int, [Int])
 phaseTwo input =
   let
     startingDestination =
@@ -103,127 +103,47 @@ phaseTwo input =
     distances =
       parseInput input
 
-    destinationsAndZeros =
-      List.foldl turn [startingDestination] distances
+    (iterations, destinations) =
+      List.foldl turn (0, [startingDestination]) distances
 
-    turn destinations@(currentDestination:rest) (Left amount) =
-      if currentDestination - amount >= 0 then
-        (currentDestination - amount) : destinations
+    turn :: (Int, [Int]) -> Direction -> (Int, [Int])
+    turn (iterations, destinations@(currentDestination:rest)) (Left amount) =
+      if currentDestination - amount > 0 then
+        (iterations, currentDestination - amount : destinations)
       else
-        let
-          startingZeros =
-            []
-
-          (destination, zeros) =
-            loopLeft (currentDestination - amount) startingZeros
-
-          zeros' =
-            if currentDestination == 0 then
-              drop 1 zeros
-            else
-              zeros
-        in
-          (destination : zeros') ++ destinations
+        loopLeft (currentDestination - amount) iterations
 
       where
-        loopLeft :: Int -> [Int] -> (Int, [Int])
-        loopLeft destination zeros =
-          if destination >= (-100) then
-            if destination == 0 || destination == (-100) then
-              (0, zeros)
-            else
-              (100 + destination, 0:zeros)
+        loopLeft :: Int -> Int -> (Int, [Int])
+        loopLeft destination iterations =
+          if destination + 100 < 0 then
+            loopLeft (destination + 100) (iterations + 1)
+          else if destination == 0 then
+            (iterations, destination : destinations)
           else
-            loopLeft (destination + 100) (0:zeros)
+            (iterations, destination + 100 : destinations)
 
-    turn destinations@(currentDestination:rest) (Right amount) =
-      if currentDestination + amount < 100 then
-        (currentDestination + amount) : destinations
+    turn (iterations, destinations@(currentDestination:rest)) (Right amount) =
+      if currentDestination + amount <= 100 then
+        if currentDestination + amount == 100 then
+          (iterations, 0:destinations)
+        else
+          (iterations, currentDestination + amount:destinations)
       else
-        let
-          startingZeros =
-            []
-
-          (destination, zeros) =
-            loopRight (currentDestination + amount) startingZeros
-
-          zeros' =
-            if currentDestination == 0 then
-              drop 1 zeros
-            else
-              zeros
-        in
-          (destination : zeros') ++ destinations
+        loopRight (currentDestination + amount) iterations
 
       where
-        loopRight :: Int -> [Int] -> (Int, [Int])
-        loopRight destination zeros =
-          if destination <= 100 then
-            if destination == 0 || destination == 100 then
-              (0, zeros)
-            else
-              (destination, zeros)
+        loopRight :: Int -> Int -> (Int, [Int])
+        loopRight destination iterations =
+          if destination - 100 > 99 then
+            loopRight (destination - 100) (iterations + 1)
           else
-            loopRight (destination - 100) (0:zeros)
-
-    -- turn destinations@(currentDestination:rest) (Left amount) =
-    --   if currentDestination - amount > 0 then
-    --     (currentDestination - amount) : destinations
-    --   else
-    --     let
-    --       startingZeros =
-    --         if currentDestination == 0 then
-    --           []
-    --         else
-    --           [0]
-
-    --       (destination, zeros) =
-    --         loopLeft (currentDestination - amount) startingZeros
-    --     in
-    --       (destination : zeros) ++ destinations
-
-    --   where
-    --     loopLeft :: Int -> [Int] -> (Int, [Int])
-    --     loopLeft destination zeros =
-    --       if destination + 100 < 0 then
-    --         loopLeft (destination + 100) (0:zeros)
-    --       else if destination == 0 then
-    --         (destination, drop 1 zeros)
-    --       else
-    --         (destination+100, zeros)
-
-    -- turn destinations@(currentDestination:rest) (Right amount) =
-    --   if currentDestination + amount < 99 then
-    --     (currentDestination + amount:destinations)
-    --   else
-    --     let
-    --       startingZeros =
-    --         if currentDestination == 0 then
-    --           [0]
-    --         else
-    --           [0]
-
-    --       (destination, zeros) =
-    --         loopRight (currentDestination + amount) startingZeros
-    --     in
-    --       (destination : zeros) ++ destinations
-
-    --   where
-    --     loopRight :: Int -> [Int] -> (Int, [Int])
-    --     loopRight destination zeros =
-    --       if destination - 100 > 99 then
-    --         loopRight (destination - 100) (0:zeros)
-    --       else if destination == 0 then
-    --         (0, drop 1 zeros)
-    --       else if destination == 100 then
-    --         (0, drop 1 zeros)
-    --       else
-    --         (destination-100, zeros)
+            (iterations + 1, destination - 100 : destinations)
 
     zeros =
-      foldr (\destination sofar -> if destination == 0 then sofar + 1 else sofar) 0 destinationsAndZeros
+      foldr (\destination sofar -> if destination == 0 then sofar + 1 else sofar) 0 destinations
   in
-    List.reverse destinationsAndZeros
+    (iterations, List.reverse destinations)
     -- zeros
 
 day01 :: IO ()
