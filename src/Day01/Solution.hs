@@ -93,8 +93,7 @@ phaseOne input =
   in
     zeros
 
--- phaseTwo :: Text -> Int
-phaseTwo :: Text -> (Int, [Int])
+phaseTwo :: Text -> Int
 phaseTwo input =
   let
     startingDestination =
@@ -103,55 +102,58 @@ phaseTwo input =
     distances =
       parseInput input
 
-    (iterations, destinations) =
+    (zeroPasses, destinations) =
       List.foldl turn (0, [startingDestination]) distances
 
     turn :: (Int, [Int]) -> Direction -> (Int, [Int])
-    turn (iterations, destinations@(currentDestination:rest)) (Left amount) =
-      if currentDestination - amount > 0 then
-        (iterations, currentDestination - amount : destinations)
-      else
-        loopLeft (currentDestination - amount) iterations
-
+    turn (zeroPasses, destinations@(currentDestination:rest)) (Left amount) =
+      resolveAmount currentDestination amount zeroPasses
       where
-        loopLeft :: Int -> Int -> (Int, [Int])
-        loopLeft destination iterations =
-          if destination + 100 < 0 then
-            loopLeft (destination + 100) (iterations + 1)
-          else if destination == 0 then
-            (iterations, destination : destinations)
-          else
-            (iterations, destination + 100 : destinations)
+        resolveAmount :: Int -> Int -> Int -> (Int, [Int])
+        resolveAmount currentDestination amount zeroPasses =
+          let
+            resultingDestination =
+              currentDestination - amount
+          in
+            if resultingDestination < (-100) then
+              resolveAmount currentDestination (amount - 100) (zeroPasses + 1)
+            else if resultingDestination < 0 then
+              if currentDestination /= 0  then
+                (zeroPasses + 1, resultingDestination + 100 : destinations)
+              else
+                (zeroPasses, resultingDestination + 100 : destinations)
+            else
+              (zeroPasses, resultingDestination : destinations)
 
-    turn (iterations, destinations@(currentDestination:rest)) (Right amount) =
-      if currentDestination + amount <= 100 then
-        if currentDestination + amount == 100 then
-          (iterations, 0:destinations)
-        else
-          (iterations, currentDestination + amount:destinations)
-      else
-        loopRight (currentDestination + amount) iterations
-
+    turn (zeroPasses, destinations@(currentDestination:rest)) (Right amount) =
+      resolveAmount currentDestination amount zeroPasses
       where
-        loopRight :: Int -> Int -> (Int, [Int])
-        loopRight destination iterations =
-          if destination - 100 > 99 then
-            loopRight (destination - 100) (iterations + 1)
-          else
-            (iterations + 1, destination - 100 : destinations)
+        resolveAmount :: Int -> Int -> Int -> (Int, [Int])
+        resolveAmount currentDestination amount zeroPasses =
+          let
+            resultingDestination =
+              currentDestination + amount
+          in
+            if resultingDestination > 100 then
+              resolveAmount currentDestination (amount - 100) (zeroPasses + 1)
+            else if resultingDestination == 100 || resultingDestination == 0 then
+              (zeroPasses, 0 : destinations)
+            else if resultingDestination < currentDestination && amount > 0 then
+              (zeroPasses + 1, resultingDestination : destinations)
+            else
+              (zeroPasses, resultingDestination : destinations)
 
     zeros =
       foldr (\destination sofar -> if destination == 0 then sofar + 1 else sofar) 0 destinations
   in
-    (iterations, List.reverse destinations)
-    -- zeros
+    zeros + zeroPasses
 
 day01 :: IO ()
 day01 = do
   putStrLn "Day01 Phase 1"
-  let someVariable = phaseOne input --
-  putStrLn $ "Some Variable: " ++ tshow someVariable
+  let someVariable = phaseOne input -- 1168
+  putStrLn $ "Zeros: " ++ tshow someVariable
 
   putStrLn "Day01 Phase 2"
-  let someOtherVariable = phaseTwo input --
-  putStrLn $ "Some Other Variable: " ++ tshow someOtherVariable
+  let someOtherVariable = phaseTwo input -- 7199
+  putStrLn $ "Zeros and zero passes: " ++ tshow someOtherVariable
