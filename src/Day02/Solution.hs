@@ -91,7 +91,73 @@ findInvalid start end =
 
 phaseTwo :: Text -> Int
 phaseTwo input =
-  error "do this"
+  let
+    ranges =
+      parseInput input
+
+    invalidNumbers = do
+      range <- ranges
+      findInvalid' (fst range) (snd range)
+  in
+    sum invalidNumbers
+
+findInvalid' :: Int -> Int -> [Int]
+findInvalid' start end =
+  find start end []
+  where
+
+    find :: Int -> Int -> [Int] -> [Int]
+    find start end soFar =
+      if start > end then
+        soFar
+      else
+        let
+          soFar' =
+            if isInvalid start then
+              start : soFar
+            else
+              soFar
+        in
+          find (start + 1) end soFar'
+
+      where
+        isInvalid number =
+          let
+            text =
+              Text.show number
+
+            textLength =
+              Text.length text
+
+            middle =
+              textLength `div` 2
+
+            (firstHalf, _secondHalf) =
+              Text.splitAt middle text
+          in
+            trySmaller firstHalf text
+
+        trySmaller "" _haystack =
+          False
+        trySmaller needle haystack =
+          if repeats needle haystack then
+            True
+          else
+            trySmaller (Text.dropEnd 1 needle) haystack
+
+repeats :: Text -> Text -> Bool
+repeats needle haystack =
+  let
+    needleLength =
+      Text.length needle
+
+    haystackLength =
+      Text.length haystack
+
+    expandedNeedle =
+      Text.replicate (haystackLength `div` needleLength) needle
+  in
+    expandedNeedle == haystack
 
 day02 :: IO ()
 day02 = do
@@ -100,5 +166,5 @@ day02 = do
   putStrLn $ "Invalid numbers: " ++ tshow someVariable
 
   putStrLn "Day02 Phase 2"
-  let someOtherVariable = phaseTwo input --
-  putStrLn $ "Some Other Variable: " ++ tshow someOtherVariable
+  let someOtherVariable = phaseTwo input -- 14582313461
+  putStrLn $ "Invalid numbers: " ++ tshow someOtherVariable
