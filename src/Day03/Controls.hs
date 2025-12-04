@@ -13,8 +13,8 @@ import qualified Data.FileEmbed as FileEmbed
 input :: Text
 input = TextEncoding.decodeUtf8Lenient $(FileEmbed.embedFileRelative "src/Day03/control_input.txt")
 
-someVariable :: Int
-someVariable = error "do this"
+part1Solution :: Int
+part1Solution = 357
 
 someOtherVariable :: Int
 someOtherVariable = error "do this"

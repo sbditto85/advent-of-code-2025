@@ -20,16 +20,61 @@ import qualified Data.Either as Either
 import qualified Data.Text as Text
 import qualified Data.Text.Read as TextRead
 
-parseInput :: Text -> [(Int, Int)]
+parseInput :: Text -> [[Int]]
 parseInput input =
-  error "do this"
+  input
+    & Import.lines
+    & fmap (Text.chunksOf 1)
+    & (fmap . fmap) TextRead.decimal
+    & fmap sequenceA
+    & Either.rights
+    & (fmap . fmap) fst
 
 input :: Text
 input = TextEncoding.decodeUtf8Lenient $(FileEmbed.embedFileRelative "src/Day03/input.txt")
 
 phaseOne :: Text -> Int
 phaseOne input =
-  error "do this"
+  let
+    batteryBanks =
+      parseInput input
+
+    largestJoltages =
+      fmap largestJoltage batteryBanks
+  in
+    sum largestJoltages
+
+largestJoltage :: [Int] -> Int
+largestJoltage batteryBank =
+  let
+    largestBattery =
+       maximum $ impureNonNull $ (reverse . drop 1 . reverse) batteryBank
+
+    biggestRightMostBattery =
+      search largestBattery (-1) batteryBank
+  in
+    largestBattery * 10 + biggestRightMostBattery
+
+  where
+    search _largestBattery biggestRightMostBattery [] =
+      biggestRightMostBattery
+    search largestBattery biggestRightMostBattery (battery:batteryBank) =
+      if largestBattery == battery then
+        let
+          currentBiggestRightMostBattery =
+            biggest biggestRightMostBattery batteryBank
+        in
+          search largestBattery currentBiggestRightMostBattery batteryBank
+      else
+        search largestBattery biggestRightMostBattery batteryBank
+
+    biggest currentBiggest [] =
+      currentBiggest
+    biggest currentBiggest (battery:batteryBank) =
+      if battery > currentBiggest then
+        biggest battery batteryBank
+      else
+        biggest currentBiggest batteryBank
 
 phaseTwo :: Text -> Int
 phaseTwo input =
@@ -38,8 +83,8 @@ phaseTwo input =
 day03 :: IO ()
 day03 = do
   putStrLn "Day03 Phase 1"
-  let someVariable = phaseOne input --
-  putStrLn $ "Some Variable: " ++ tshow someVariable
+  let sumOfBatteries = phaseOne input -- 17179
+  putStrLn $ "Sum of batteries: " ++ tshow sumOfBatteries
 
   putStrLn "Day03 Phase 2"
   let someOtherVariable = phaseTwo input --
