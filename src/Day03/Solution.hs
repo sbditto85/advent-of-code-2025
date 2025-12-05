@@ -13,6 +13,8 @@ module Day03.Solution
 
 import Import
 
+import qualified Data.List as List
+
 import qualified Data.Text.Encoding as TextEncoding
 import qualified Data.FileEmbed as FileEmbed
 
@@ -78,7 +80,45 @@ largestJoltage batteryBank =
 
 phaseTwo :: Text -> Int
 phaseTwo input =
-  error "do this"
+  let
+    batteryBanks =
+      parseInput input
+
+    largest12BatteryJoltages =
+      fmap largest12BatteryJoltage batteryBanks
+  in
+    sum largest12BatteryJoltages
+
+largest12BatteryJoltage :: [Int] -> Int
+largest12BatteryJoltage batteryBank =
+  maximum . impureNonNull . fmap toNumber $ batteryBankSubsequences 12 batteryBank
+
+batteryBankSubsequences :: Int -> [Int] -> [[Int]]
+batteryBankSubsequences 1 banks =
+  fmap (:[]) banks
+batteryBankSubsequences size batteryBanks@(frontBattery:rest)
+  | size == List.length batteryBanks =
+    [batteryBanks]
+  | otherwise =
+    let
+      smallerLists =
+        batteryBankSubsequences (size - 1) rest
+
+      sameSizeLists =
+        batteryBankSubsequences size rest
+    in
+      (fmap (take size . (frontBattery:)) smallerLists) ++ (fmap (take size) sameSizeLists)
+
+toNumber :: [Int] -> Int
+toNumber [] =
+  0
+toNumber (digit:digitList) =
+  go digit digitList
+  where
+    go soFar [] =
+      soFar
+    go soFar (digit:rest) =
+      go (10 * soFar + digit) rest
 
 day03 :: IO ()
 day03 = do
@@ -87,5 +127,5 @@ day03 = do
   putStrLn $ "Sum of batteries: " ++ tshow sumOfBatteries
 
   putStrLn "Day03 Phase 2"
-  let someOtherVariable = phaseTwo input --
-  putStrLn $ "Some Other Variable: " ++ tshow someOtherVariable
+  let sumOf12Batteries = phaseTwo input --
+  putStrLn $ "Sum of 12 batteries: " ++ tshow sumOf12Batteries

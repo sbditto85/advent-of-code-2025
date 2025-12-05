@@ -16,5 +16,5 @@ input = TextEncoding.decodeUtf8Lenient $(FileEmbed.embedFileRelative "src/Day03/
 part1Solution :: Int
 part1Solution = 357
 
-someOtherVariable :: Int
-someOtherVariable = error "do this"
+part2Solution :: Int
+part2Solution = 3121910778619
